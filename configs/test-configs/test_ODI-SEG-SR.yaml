@@ -1,0 +1,29 @@
+exp_name: FAOR-I128-555
+model:
+  name: ours
+  args:
+    max_freq: 3
+    srnet_spec:
+      name: adaptive-edsr-baseline
+      args:
+        n_feats: 147
+
+test_dataset:
+  dataset:
+    name: image-folder
+    args:
+      root_path: data/odisr/test
+  wrapper:
+    name: ours-test-xn
+    args: {}
+  batch_size: 1
+  eval_n: 
+    - 2
+    - 4 
+    - 8 
+    - 16
+eval_type: benchmark
+
+save_img: True
+
+checkpoint: save/pre-trained_models/train-SEG-S4-I128-B6.pth
