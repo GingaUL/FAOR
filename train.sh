@@ -1,0 +1,1 @@
+python train_arbSR.py --config configs/train-odisr-configs/train-SEG-S4-I128-B6.yaml --gpu 1,2,3,4,5,6,7
