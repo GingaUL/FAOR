@@ -3,6 +3,8 @@
 >This is the official implementation for the paper FAOR: 
 ["Fast Omni-Directional Image Super-Resolution: Adapting the Implicit Image Function with Pixel and Semantic-Wise Spherical Geometric Priors"]
 
+**It is important to note that, for anonymous submissions, we are temporarily using MEGA to store and download files.**
+
 ## Contents
 - [Introduction](#introduction)
   - [Overview](#overview)
@@ -48,14 +50,13 @@ data
 ├── odisr
 │   ├── test
 │   │   ├── HR
-│   │   ├── map
+│   │   └── map
 │   ├── train
 │   │   ├── HR
-│   │   ├── map
+│   │   └── map
 │   └── validation
 │       ├── HR
 │       └── map
-
 ```
 
 ## Model
@@ -64,6 +65,10 @@ data
 Model | Download
 :-: | :-:
 FAOR | [MEGA](https://mega.nz/file/ydtznTja#8-Mklfuim6bp770rmacRD65251zcO8RGe-XS_Bfui2E)
+
+```commandline
+mkdir -p save/pretrained_models
+```
 
 - Put the checkpoint into the save folder as follows:
 
@@ -79,9 +84,20 @@ python  ope_demo_zoom.py --exp_folder save/train_edsr-ope --ckpt_name train-SEG-
 ``` -->
 
 ## Testing
-Given HR ODI, test FAOR set for scale x2, x4, x8 and x16. You can specify scaling factor in test config. Visual results will be saved in vis_res/odisr
+Given HR ODI, test FAOR set for scale x2, x4, x8 and x16. You can specify scaling factor in test config. 
+
 ```commandline
 python test_auto.py --test_config configs/test-configs/test_ODI-SEG-SR.yaml --gpu 0
+```
+
+Visual results will be saved in vis_res/odisr as follows:
+```
+vis_res
+├── odisr
+│   ├── X2
+│   ├── X4
+|   ├── X8
+│   └── X16
 ```
 <!-- Given LR ODI, test FAOR for specific scaling factor.
 ```commandline
