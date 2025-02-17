@@ -7,7 +7,7 @@ import datasets
 import models
 import dl_utils
 from tensorboardX import SummaryWriter
-from test import test_both_ours
+from test import test_ours
 
 
 if __name__ == '__main__':
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         loader = DataLoader(dataset, batch_size=test_spec['batch_size'],
                             num_workers=8, pin_memory=True)
 
-        test_psnr, test_ssim, test_run_time = test_both_ours(loader, model, log, log_name, save_img=is_save)
+        test_psnr, test_ssim, test_run_time = test_ours(loader, model, log, log_name, save_img=is_save)
 
         log('test avg: psnr={:.4f}'.format(test_psnr), filename=log_name)
         log('test avg: ssim={:.4f}'.format(test_ssim), filename=log_name)

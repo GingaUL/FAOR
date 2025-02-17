@@ -25,7 +25,7 @@ def resize_fn(img, size, is_img=True):
 class ours_sample(Dataset):
 
     def __init__(self, dataset, inp_size=None, scale_min=1, scale_max=None,
-                 augment=True, norm=True, sample_q=None):
+                 augment=True, norm=True, sample_q=None, h=1024, w=2048):
         self.dataset = dataset
         self.inp_size = inp_size
         self.scale_min = scale_min
@@ -35,7 +35,7 @@ class ours_sample(Dataset):
         self.augment = augment
         self.sample_q = sample_q
         self.norm = norm
-        self.ws = torch.from_numpy(np.load('../mw.npy')).float()
+        self.ws = torch.cos(make_coord([h]).unsqueeze(1).repeat([1, w, 1]).permute(2,0,1) * math.pi / 2).float()
         self.coord = make_coord((1024,2048), flatten=False)  #[H, W, 2]
 
     def __len__(self):
@@ -96,23 +96,73 @@ class ours_sample(Dataset):
 
 @register('ours-test-xn')  # Downsample HR-ODI to LR-ODI then SR to HR-ODI
 class our_patch(Dataset):
-    def __init__(self, dataset, xn=4, inp_size=None, norm=True, augment=False):
+    def __init__(self, dataset, xn=4, inp_size=None, norm=True, augment=False, h=1024, w=2048):
         self.dataset = dataset
         self.inp_size = inp_size
         self.augment = augment
         self.norm = norm
         self.xn = xn
-        self.ws = torch.from_numpy(np.load('mw.npy')).float()
+
+        self.h = int(1024 / xn)
+        self.w = int(2048 / xn)
+
+        if self.h % 8 != 0:
+            dis = self.h % 8
+            self.h -= dis
+        
+        if self.w % 8 != 0:
+            dis = self.w % 8
+            self.w -= dis
+
+        self.ws = torch.cos(make_coord([h]).unsqueeze(1).repeat([1, w, 1]).permute(2,0,1) * math.pi / 2).float()
         self.lontlat_hr = make_coord((1024, 2048), flatten=True)
-        self.lontlat_lr = make_coord((1024 // xn, 2048 // xn), flatten=False).permute(2,0,1)  
+        self.lontlat_lr = make_coord((self.h, self.w), flatten=False).permute(2,0,1) 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
         img, map = self.dataset[idx]
         crop_hr, crop_map = img, map
-        crop_lr = resize_fn(crop_hr, (1024 // self.xn, 2048 // self.xn))
-        crop_map = resize_fn(crop_map, (1024 // self.xn, 2048 // self.xn))
+        crop_lr = resize_fn(crop_hr, (self.h, self.w))
+        crop_map = resize_fn(crop_map, (self.h, self.w))
+        crop_condition = self.ws[:1, :, :]
+        crop_condition = resize_fn(crop_condition, crop_lr.shape[-2:], is_img=False)
+        crop_hr = crop_hr.contiguous().view(3, -1)
+
+        if self.norm:
+            crop_lr = (crop_lr - 0.5) / 0.5
+            crop_hr = (crop_hr - 0.5) / 0.5
+        return {
+            'lr_img': crop_lr,
+            'gt_sample': crop_hr,
+            'coords_sample': self.lontlat_hr,
+            'lonlat_hr': self.lontlat_hr,
+            'lonlat_lr': self.lontlat_lr,
+            'condition': crop_condition,
+            'qmap': crop_map,
+        }
+
+@register('ours-test-arbit-xn')  # Input HR-ODI resolution isn't 1024*2048 then SR xn to HR-ODI
+class our_patch(Dataset):
+    def __init__(self, dataset, xn=4, inp_size=None, norm=True, augment=False, hr_h=512, hr_w=1024):
+        self.hr_h = hr_h
+        self.hr_w = hr_w
+        self.dataset = dataset
+        self.inp_size = inp_size
+        self.augment = augment
+        self.norm = norm
+        self.xn = xn
+        self.ws = torch.cos(make_coord([hr_h]).unsqueeze(1).repeat([1, hr_w, 1]).permute(2,0,1) * math.pi / 2).float()
+        self.lontlat_hr = make_coord((hr_h, hr_w), flatten=True)
+        self.lontlat_lr = make_coord((hr_h  // xn, hr_w  // xn), flatten=False).permute(2,0,1)  
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        img, map = self.dataset[idx]
+        crop_hr, crop_map = img, map
+        crop_lr = resize_fn(crop_hr, (self.hr_h // self.xn, self.hr_w // self.xn))
+        crop_map = resize_fn(crop_map, (self.hr_h // self.xn, self.hr_w // self.xn))
         crop_condition = self.ws[:1, :, :]
         crop_condition = resize_fn(crop_condition, crop_lr.shape[-2:], is_img=False)
         crop_hr = crop_hr.contiguous().view(3, -1)
@@ -149,7 +199,7 @@ class test_patch(Dataset):
         crop_hr, crop_map = img, map
         crop_lr = resize_fn(crop_hr, (1024 // self.xn, 2048 // self.xn))
         crop_map = resize_fn(crop_map, (1024 // self.xn, 2048 // self.xn))
-        crop_condition = self.ws
+        crop_condition = self.ws[:1, :, :]
         crop_condition = resize_fn(crop_condition, crop_lr.shape[-2:], is_img=False)
         crop_hr = crop_hr.contiguous().view(3, -1)
 

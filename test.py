@@ -32,7 +32,7 @@ def eval_psnr_odi(loader, model):
 
     return val_res_psnr.item()
 
-def test_both_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='odisr'):
+def test_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='odisr'):
     model.eval()
     metric_fn_ssim = dl_utils.psnr_metric.cal_ssim
     metric_fn_psnr = dl_utils.calc_psnr
@@ -64,8 +64,7 @@ def test_both_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='
             res_ssim = metric_fn_ssim(pred, batch['gt_sample'])
             if save_img:
                 _, _, h, w = batch['lr_img'].shape
-                scale = 1024 // h
-                # print('scale = ', scale)
+                scale = 1024 / h
                 save_pred = (pred + 1)/2 * 255
                 save_folder = f'./vis_res/{exp_folder}/X{scale}'
                 os.makedirs(save_folder, exist_ok=True)
@@ -80,11 +79,9 @@ def test_both_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='
 
             if res_psnr >= best_psnr:
                 best_psnr = res_psnr
-                # print('best psnr = ', best_psnr)
                 log_fn(
                     f'test_img: {id}, best psnr: {res_psnr.item()}, ssim: {res_ssim.item()}, time: {run_time}s',
                     filename=log_name)
-                
 
             else:
                 log_fn(
@@ -116,7 +113,6 @@ def single_img_sr(lr_img, model, h, w, gt=None, up_down=None, flip=None):
                 pred.clamp_(-1, 1)
             elif ud == 'bic':
                 pred, run_time = model.inference(lr_img, h=h * ud_scale, w=w * ud_scale)
-
                 pred = dl_utils.resize_img(pred, (h, w)).cuda()
                 pred.clamp_(-1, 1)
             elif ud == 'avg':
