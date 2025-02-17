@@ -1,0 +1,59 @@
+# train lr config
+exp_name: FAOR_scale4_input128_batch6
+train_dataset:
+  dataset:
+    name: image-folder
+    args:
+      root_path: data/odisr/train
+      repeat: 10
+      cache: in_memory
+  wrapper:
+    name: ours-sample-train
+    args:
+      inp_size: 128
+      scale_min: 1
+      scale_max: 4
+      augment: true
+      norm: true
+      sample_q: 16384
+  batch_size: 6
+val_dataset:
+  dataset:
+    name: image-folder
+    args:
+      root_path: data/odisr/validation
+      # first_k1: 100
+      repeat: 1
+      cache: in_memory
+  wrapper:
+    name: ours-sample-train
+    args:
+      inp_size: 128
+      scale_min: 4
+      scale_max: 4
+      augment: true
+      norm: true
+  batch_size: 6
+model:
+  name: ours
+  args:
+    srnet_spec:
+      name: adaptive-edsr-baseline
+      args:
+        n_feats: 147
+optimizer:
+  name: adam
+  args:
+    lr: 0.0001
+epoch_max: 1000
+multi_step_lr:
+  milestones:
+  - 30 
+  - 50
+  - 100
+  - 400
+  - 600
+  - 800
+  gamma: 0.5
+epoch_val: 10
+epoch_save: 5
