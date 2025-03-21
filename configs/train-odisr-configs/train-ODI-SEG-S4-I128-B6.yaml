@@ -37,10 +37,14 @@ val_dataset:
 model:
   name: ours
   args:
-    srnet_spec:
-      name: adaptive-edsr-baseline
-      args:
-        n_feats: 147
+    embed_dim: 156
+    depths: [6, 6, 6, 6, 6, 6]
+    num_heads: [6, 6, 6, 6, 6, 6]
+    atfm: [6, 6, 6, 6, 6, 6]
+    atfm_type: 3conv
+    use_add_atfm: [1, 1, 1, 1, 1, 1]
+    add_atfm_type: 2conv
+    c_dim: 156
 optimizer:
   name: adam
   args:
