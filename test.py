@@ -1,11 +1,14 @@
 import torch
-from tqdm import tqdm
 import dl_utils
 import torch.nn as nn
 import time
 import numpy as np
 import cv2
 import os
+import math
+
+from tqdm import tqdm
+from dl_utils import make_coord
 
 def check_updown(up_down):
     ud = up_down.split('-')[0]  # bic / avg / none
@@ -36,8 +39,9 @@ def test_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='odisr
     model.eval()
     metric_fn_ssim = dl_utils.psnr_metric.cal_ssim
     metric_fn_psnr = dl_utils.calc_psnr
-
-    ws = torch.from_numpy(np.load('./mw.npy')).view(1, 3, -1).unsqueeze(0).cuda()
+    
+    ws = torch.cos(make_coord([h]).unsqueeze(1).repeat([1, w, 1]).permute(2,0,1) * math.pi / 2).float()
+    ws = ws.expand(3, -1, -1).view(1, 3, -1).unsqueeze(0).cuda()
 
     test_res_psnr = dl_utils.Averager()
     test_res_ssim = dl_utils.Averager()
