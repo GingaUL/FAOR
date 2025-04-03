@@ -10,7 +10,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 import datasets
 import models
 import torchvision
-from test import eval_psnr_odi
+from test import eval_odi
 import dl_utils
 
 
@@ -52,6 +52,7 @@ def prepare_training():
         optimizer = dl_utils.make_optimizer(
             model.parameters(), sv_file['optimizer'], load_sd=True)
         epoch_start = sv_file['epoch'] + 1
+        print('resume from epoch: ', epoch_start)
         if config.get('multi_step_lr') is None:
             lr_scheduler = None
         else:
@@ -64,6 +65,7 @@ def prepare_training():
         optimizer = dl_utils.make_optimizer(
             model.parameters(), sv_file['optimizer'], load_sd=True)
         epoch_start = sv_file['epoch'] + 1
+        print('resume from epoch: ', epoch_start)
         if config.get('multi_step_lr') is None:
             lr_scheduler = None
         else:
@@ -73,6 +75,7 @@ def prepare_training():
 
     else:  # for start
         model = models.make(config['model']).cuda()
+        print(f'model init: {model}')
         optimizer = dl_utils.make_optimizer(
             model.parameters(), config['optimizer'])
         epoch_start = 1
@@ -94,8 +97,6 @@ def train(train_loader, model, optimizer):
             batch[k] = v.cuda()
         pred_sample = model(x=batch['lr_img'], sample_coords=batch['coords_sample'], condition=batch['condition'],lonlat_hr=batch['lonlat_hr'],lonlat_lr=batch['lonlat_lr'], qmap=batch['qmap'])
         pred_sample.clamp_(-1, 1)
-        # print('pred sample shape = ', pred_sample.shape)
-        # print('batch gt_sample shape = ', batch['gt_sample'].shape)
         loss = loss_fn(pred_sample, batch['gt_sample'])
         train_loss.add(loss.item())
 
@@ -119,8 +120,12 @@ def main(config_, save_path):
     n_gpus = len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
     model = model.to('cuda')
     model = nn.parallel.DataParallel(model)
-        
     
+    total_param = sum([param.nelement() for param in model.parameters()])
+    log('Number of Parameters: %.4fM' % (total_param/1e6))
+    print_model = str(model)
+    log('print model: ' + print_model)
+
     epoch_max = config['epoch_max']
     epoch_val = config.get('epoch_val')
     epoch_save = config.get('epoch_save')
@@ -168,10 +173,11 @@ def main(config_, save_path):
             else:
                 model_ = model
             with torch.no_grad():
-                val_psnr = eval_psnr_odi(val_loader, model_)
+                val_psnr, val_ssim = eval_odi(val_loader, model_)
 
-            log_info.append('val: psnr={:.4f}'.format(val_psnr))
+            log_info.append('val: WS-PSNR={:.4f}, WS-SSIM={:.4f}'.format(val_psnr, val_ssim))
             writer.add_scalars('psnr', {'val': val_psnr}, epoch)
+            writer.add_scalars('ssim', {'val': val_ssim}, epoch)
             if val_psnr > max_val_psnr:
                 max_val_psnr = val_psnr
                 torch.save(sv_file, os.path.join(save_path, f'epoch-best-psnr.pth'))

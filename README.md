@@ -1,9 +1,7 @@
-# FAOR: Fast Omni-Directional Image Super-Resolution: Adapting the Implicit Image Function with Pixel and Semantic-Wise Spherical Geometric Priors
+# [AAAI 2025] FAOR: Fast Omni-Directional Image Super-Resolution: Adapting the Implicit Image Function with Pixel and Semantic-Wise Spherical Geometric Priors
 
 >This is the official implementation for the paper FAOR: 
 ["Fast Omni-Directional Image Super-Resolution: Adapting the Implicit Image Function with Pixel and Semantic-Wise Spherical Geometric Priors"]
-
-**It is important to note that, for anonymous submissions, we are temporarily using MEGA to store and download files.**
 
 ## Contents
 - [Introduction](#introduction)

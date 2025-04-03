@@ -16,31 +16,40 @@ def check_updown(up_down):
     return ud, ud_scale
 
 
-def eval_psnr_odi(loader, model):
+def eval_odi(loader, model):
     model.eval()
     metric_fn_psnr = dl_utils.calc_psnr
+    metric_fn_ssim = dl_utils.psnr_metric.cal_ssim
 
     val_res_psnr = dl_utils.Averager()
+    val_res_ssim = dl_utils.Averager()
+
+    hr_h = 1024
+    hr_w = 2048
+    ws = torch.cos(make_coord([hr_h]).unsqueeze(1).repeat([1, hr_w, 1]).permute(2,0,1) * math.pi / 2).float()
+    ws = ws.expand(3, -1, -1).view(1, 3, -1).unsqueeze(0).cuda()
 
     pbar = tqdm(loader, leave=False, desc='eval_psnr')
     with torch.no_grad():
         for batch in pbar:
             for k, v in batch.items():
                 batch[k] = v.cuda()
-            pred = model(x=batch['lr_img'], sample_coords=batch['coords_sample'], condition=batch['condition'],lonlat_hr=batch['lonlat_hr'],lonlat_lr=batch['lonlat_lr'], qmap=batch['qmap'])
+            pred = model(img_lr=batch['lr_img'], sample_coords=batch['coords_sample'], condition=batch['condition'],lonlat_hr=batch['lonlat_hr'],lonlat_lr=batch['lonlat_lr'])
             pred.clamp_(-1, 1)
-            res_psnr = metric_fn_psnr(pred, batch, use_norm=False)
+            res_psnr = metric_fn_psnr(pred, batch, ws=ws, if_ws=True)
+            res_ssim = metric_fn_ssim(pred, batch['gt_sample'])
             val_res_psnr.add(res_psnr.item(), batch['lr_img'].shape[0])
-            pbar.set_description('val {:.4f}'.format(val_res_psnr.item()))
+            val_res_ssim.add(res_ssim.item(), batch['lr_img'].shape[0])
+            pbar.set_description('val WS-PSNR: {:.4f}, WS-SSIM: {:.4f}'.format(val_res_psnr.item(), val_res_ssim.item()))
 
-    return val_res_psnr.item()
+    return val_res_psnr.item(), val_res_ssim.item()
 
-def test_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='odisr'):
+def test_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='odisr', hr_h=1024, hr_w=2048):
     model.eval()
     metric_fn_ssim = dl_utils.psnr_metric.cal_ssim
     metric_fn_psnr = dl_utils.calc_psnr
     
-    ws = torch.cos(make_coord([h]).unsqueeze(1).repeat([1, w, 1]).permute(2,0,1) * math.pi / 2).float()
+    ws = torch.cos(make_coord([hr_h]).unsqueeze(1).repeat([1, hr_w, 1]).permute(2,0,1) * math.pi / 2).float()
     ws = ws.expand(3, -1, -1).view(1, 3, -1).unsqueeze(0).cuda()
 
     test_res_psnr = dl_utils.Averager()
@@ -68,13 +77,13 @@ def test_ours(loader, model, log_fn, log_name, save_img=False, exp_folder='odisr
             res_ssim = metric_fn_ssim(pred, batch['gt_sample'])
             if save_img:
                 _, _, h, w = batch['lr_img'].shape
-                scale = 1024 / h
+                scale = hr_h / h
                 save_pred = (pred + 1)/2 * 255
                 save_folder = f'./vis_res/{exp_folder}/X{scale}'
                 os.makedirs(save_folder, exist_ok=True)
                 save_path = f'{save_folder}/{id}.jpg'
                 save_pred = save_pred.squeeze(0)
-                save_pred = save_pred.reshape(3, 1024, 2048)
+                save_pred = save_pred.reshape(3, hr_h, hr_w)
                 save_pred = save_pred.cpu().numpy()
                 save_pred = save_pred.astype(np.uint8)
                 save_pred = save_pred.transpose(1, 2, 0)

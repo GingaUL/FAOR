@@ -43,7 +43,7 @@ if __name__ == '__main__':
         loader = DataLoader(dataset, batch_size=test_spec['batch_size'],
                             num_workers=8, pin_memory=True)
 
-        test_psnr, test_ssim, test_run_time = test_ours(loader, model, log, log_name, save_img=is_save)
+        test_psnr, test_ssim, test_run_time = test_ours(loader, model, log, log_name, save_img=is_save, exp_folder=exp_name)
 
         log('test avg: psnr={:.4f}'.format(test_psnr), filename=log_name)
         log('test avg: ssim={:.4f}'.format(test_ssim), filename=log_name)

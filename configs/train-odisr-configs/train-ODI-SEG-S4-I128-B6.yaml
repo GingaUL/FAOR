@@ -26,14 +26,11 @@ val_dataset:
       repeat: 1
       cache: in_memory
   wrapper:
-    name: ours-sample-train
-    args:
-      inp_size: 128
-      scale_min: 4
-      scale_max: 4
-      augment: true
-      norm: true
-  batch_size: 6
+    name: ours-test-xn
+    args: {}
+  batch_size: 1
+  eval_n:
+    - 4
 model:
   name: ours
   args:
