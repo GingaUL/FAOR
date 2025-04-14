@@ -107,3 +107,17 @@ python test_auto.py --test_config configs/test-configs/test_ODI-SEG-SR.yaml --gp
 sh train.sh
 ```
 
+## Citation
+```
+@article{shen2025fast,
+  title={Fast Omni-Directional Image Super-Resolution: Adapting the Implicit Image Function with Pixel and Semantic-Wise Spherical Geometric Priors},
+  author={Shen, Xuelin and Wang, Yitong and Zheng, Silin and Xiao, Kang and Yang, Wenhan and Wang, Xu},
+  journal={arXiv preprint arXiv:2502.05902},
+  year={2025}
+}
+```
+
+## License
+```
+This project is released under the MIT license.
+```
