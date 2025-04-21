@@ -108,6 +108,9 @@ python test_auto.py --test_config configs/test-configs/test_ODI-SEG-SR.yaml --gp
 sh train.sh
 ```
 
+## Contact
+If you have any questions, please feel free to contact us at 2310543026@email.szu.edu.cn
+
 ## Citation
 If this code is useful for your research or project, we would appreciate it if you could cite our paper. The BibTeX citation is as follows:
 ```
