@@ -41,6 +41,7 @@ pip install -r requirements.txt
 
 ## Data Preparation
 <!-- - Download the [datasets](https://mega.nz/file/6QkBBCZY#pV3IJe-c9fzmZ7cxSfhpOaYxg_OzLX6F5q4UiJYjFNw).  -->
+- We use the LAU dataset, apply the same cleaning procedure as [OSRT](https://github.com/Fanghua-Yu/OSRT), and generate segmentation maps using [Trans4PASS](https://github.com/jamycheung/Trans4PASS).
 - For convenience, we have initially provided the [test set](https://mega.nz/file/6QkBBCZY#pV3IJe-c9fzmZ7cxSfhpOaYxg_OzLX6F5q4UiJYjFNw) of the ODI-SR dataset for testing.
 - Put the datasets into the data folder as follows:
 ```
@@ -108,6 +109,7 @@ sh train.sh
 ```
 
 ## Citation
+If this code is useful for your research or project, we would appreciate it if you could cite our paper. The BibTeX citation is as follows:
 ```
 @article{shen2025fast,
   title={Fast Omni-Directional Image Super-Resolution: Adapting the Implicit Image Function with Pixel and Semantic-Wise Spherical Geometric Priors},
